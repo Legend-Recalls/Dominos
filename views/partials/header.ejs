@@ -1,0 +1,57 @@
+<header class="site-header">
+    <a class="brand" href="/">
+        <!-- little brass domino logo -->
+        <svg class="logo-tile" viewBox="0 0 26 40" aria-hidden="true">
+            <rect x="1" y="1" width="24" height="38" rx="4" fill="#f5f1e6" stroke="#cec7b2"/>
+            <line x1="4" y1="20" x2="22" y2="20" stroke="#cec7b2" stroke-width="1.5"/>
+            <circle cx="9" cy="9" r="2.2" fill="#2b2b2b"/>
+            <circle cx="17" cy="13" r="2.2" fill="#2b2b2b"/>
+            <circle cx="9" cy="27" r="2.2" fill="#b3261e"/>
+            <circle cx="13" cy="31" r="2.2" fill="#b3261e"/>
+            <circle cx="17" cy="35" r="2.2" fill="#b3261e"/>
+        </svg>
+        Dominoes&nbsp;Arena
+    </a>
+
+    <nav>
+        <ul class="nav-links">
+            <li><a href="/">🏆 Tournaments</a></li>
+            <li><a href="/quick">⚡ Quick Match</a></li>
+            <li>
+                <button type="button" id="themeToggle" title="Toggle night felt">🌙</button>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<script>
+    (function () {
+        // Persisted theme.
+        const KEY = 'arena-theme';
+        const toggle = document.getElementById('themeToggle');
+        function apply(t) {
+            document.body.classList.toggle('dark-theme', t === 'dark');
+            if (toggle) toggle.textContent = t === 'dark' ? '☀️' : '🌙';
+        }
+        apply(localStorage.getItem(KEY) || 'felt');
+        toggle && toggle.addEventListener('click', function () {
+            const next = document.body.classList.contains('dark-theme') ? 'felt' : 'dark';
+            localStorage.setItem(KEY, next);
+            apply(next);
+        });
+
+        // Tiny global helpers (toast + confirm styling hook).
+        window.Arena = window.Arena || {};
+        window.Arena.toast = function (message, isError) {
+            const el = document.createElement('div');
+            el.className = 'toast' + (isError ? ' error' : '');
+            el.textContent = message;
+            document.body.appendChild(el);
+            requestAnimationFrame(() => el.classList.add('show'));
+            setTimeout(() => {
+                el.classList.remove('show');
+                setTimeout(() => el.remove(), 400);
+            }, 2800);
+        };
+    })();
+</script>

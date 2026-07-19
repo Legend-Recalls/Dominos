@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= tournament.name %> — Dominoes Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="content">
+        <div class="page-head">
+            <h1><%= tournament.name %></h1>
+            <p><%= tournament.players.join(' · ') %></p>
+        </div>
+
+        <div class="actions-row">
+            <a href="/tournament/<%= tournament._id %>/game/new" class="btn">🎲 Add Game</a>
+            <a href="/tournament/<%= tournament._id %>/randompicker" class="btn btn-ghost">🔀 Player Order</a>
+        </div>
+
+        <div class="split">
+            <!-- Games -->
+            <section class="tile" style="padding:1.4rem;">
+                <div class="section-title" style="color:var(--ink)">
+                    <h2 style="color:var(--ink)">Games</h2>
+                </div>
+                <% if (tournament.games.length === 0) { %>
+                    <p class="hint">No games yet. Add the first game to start scoring.</p>
+                <% } else { %>
+                    <ul class="game-list">
+                        <% tournament.games.forEach(game => { %>
+                            <li class="tile game-row" style="box-shadow:none;">
+                                <a href="/game/<%= game._id %>" style="text-decoration:none; flex:1;">
+                                    <span class="g-date"><%= new Date(game.date).toDateString() %></span>
+                                    <span class="hint"> · <%= game.time %> · to <%= game.maxpoints %></span>
+                                </a>
+                                <span class="g-status <%= game.isNew ? 'live' : 'done' %>">
+                                    <%= game.isNew ? 'In progress' : 'Played' %>
+                                </span>
+                                <form action="/game/<%= game._id %>?_method=DELETE" method="POST"
+                                      onsubmit="return confirm('Delete this game?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">✕</button>
+                                </form>
+                            </li>
+                        <% }) %>
+                    </ul>
+                <% } %>
+            </section>
+
+            <!-- Leaderboard -->
+            <aside class="tile leaderboard">
+                <h2>🏆 Leaderboard</h2>
+                <%
+                    // Points system: within each game, players are ranked by
+                    // total round score ascending (lowest is best) and earn
+                    // placement points (1st = most). Summed across games.
+                    const finalScores = {};
+                    tournament.players.forEach(p => { finalScores[p] = 0; });
+
+                    tournament.games.forEach(game => {
+                        const gameScores = new Array(tournament.players.length).fill(0);
+                        game.rounds.forEach(round => {
+                            round.forEach((score, index) => { gameScores[index] += score; });
+                        });
+                        const pairs = gameScores.map((score, index) => ({ score, index }));
+                        // Best (lowest) score gets the highest placement points.
+                        pairs.sort((a, b) => b.score - a.score);
+                        pairs.forEach((pair, rank) => {
+                            finalScores[tournament.players[pair.index]] += rank + 1;
+                        });
+                    });
+
+                    const ranked = Object.entries(finalScores)
+                        .map(([player, points]) => ({ player, points }))
+                        .sort((a, b) => b.points - a.points);
+                %>
+                <% ranked.forEach((row, i) => { %>
+                    <div class="rank-row pos-<%= i + 1 %>">
+                        <span class="rank-badge"><%= i + 1 %></span>
+                        <span class="rank-name"><%= row.player %></span>
+                        <span class="rank-points"><%= row.points %> pts</span>
+                    </div>
+                <% }) %>
+                <p class="hint" style="margin-top:1rem; text-align:center;">
+                    Placement points across <%= tournament.games.length %> game(s).
+                </p>
+            </aside>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Not Found — Dominoes Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="content">
+        <div class="empty-state tile" style="padding:2.5rem;">
+            <div class="domino-fan">
+                <%- include('partials/domino', { top: 4, bottom: 0 }) %>
+                <%- include('partials/domino', { top: 0, bottom: 4 }) %>
+            </div>
+            <h3>404 — this tile isn't on the table</h3>
+            <p>The page you're looking for doesn't exist.</p>
+            <a href="/" class="btn">← Back to the Arena</a>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

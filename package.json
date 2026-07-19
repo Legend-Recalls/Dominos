@@ -1,0 +1,28 @@
+{
+  "name": "dominoes-arena",
+  "version": "1.0.0",
+  "description": "Dominoes Tournament Tracker with a felt-table UI, live round scoring, tournament leaderboards, and a no-signup Quick Match mode.",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js"
+  },
+  "keywords": [
+    "dominoes",
+    "tournament",
+    "scoreboard",
+    "express",
+    "ejs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.4.1"
+  }
+}

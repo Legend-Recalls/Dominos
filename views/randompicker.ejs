@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Order — <%= tournament.name %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="content">
+        <div class="page-head">
+            <h1>🔀 Seating Order</h1>
+            <p><%= tournament.name %></p>
+        </div>
+
+        <div class="picker-stage">
+            <div class="tile" style="padding:1.5rem 2rem;">
+                <p class="hint" style="text-align:center; margin-top:0;">Players</p>
+                <div style="display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center;">
+                    <% tournament.players.forEach(player => { %>
+                        <span class="player-pill" style="background:var(--felt);"><%= player %></span>
+                    <% }) %>
+                </div>
+            </div>
+
+            <button class="btn btn-lg" id="shuffleBtn">🎲 Reveal Seating Order</button>
+
+            <ol class="order-list" id="orderList" hidden></ol>
+
+            <a href="/tournament/<%= tournament._id %>" class="btn btn-ghost">← Back to tournament</a>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        (function () {
+            const players = <%- JSON.stringify(tournament.players) %>;
+            const btn = document.getElementById('shuffleBtn');
+            const list = document.getElementById('orderList');
+
+            function shuffle(arr) {
+                const a = arr.slice();
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            }
+
+            btn.addEventListener('click', function () {
+                const order = shuffle(players);
+                list.innerHTML = '';
+                list.hidden = false;
+                order.forEach((name, i) => {
+                    const li = document.createElement('li');
+                    li.className = 'tile order-item';
+                    li.style.animationDelay = (i * 0.09) + 's';
+                    const seat = document.createElement('span');
+                    seat.className = 'seat';
+                    seat.textContent = i + 1;
+                    const label = document.createElement('span');
+                    label.textContent = name;
+                    li.appendChild(seat);
+                    li.appendChild(label);
+                    list.appendChild(li);
+                });
+                btn.textContent = '🔁 Shuffle Again';
+            });
+        })();
+    </script>
+</body>
+</html>

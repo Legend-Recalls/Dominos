@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dominoes Arena — Tournaments</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="content">
+        <div class="page-head">
+            <h1>🁫 Dominoes Arena</h1>
+            <p>Track tournaments, score every round live, and crown the champion.</p>
+        </div>
+
+        <div class="actions-row">
+            <a href="/tournament/new" class="btn btn-lg">➕ New Tournament</a>
+            <a href="/quick" class="btn btn-lg btn-ghost">⚡ Quick Match</a>
+        </div>
+
+        <% if (!dbReady) { %>
+            <div class="banner">
+                Database offline — tournaments are unavailable right now, but
+                <a href="/quick" style="color:var(--brass);font-weight:600;">Quick Match</a> works with no setup.
+            </div>
+        <% } %>
+
+        <% if (dbReady && tournaments.length === 0) { %>
+            <div class="empty-state tile" style="padding:2.5rem;">
+                <div class="domino-fan">
+                    <%- include('partials/domino', { top: 6, bottom: 3 }) %>
+                    <%- include('partials/domino', { top: 5, bottom: 5 }) %>
+                    <%- include('partials/domino', { top: 2, bottom: 4 }) %>
+                </div>
+                <h3>No tournaments yet</h3>
+                <p>Set the table — create your first tournament to get started.</p>
+                <a href="/tournament/new" class="btn">➕ Create Tournament</a>
+            </div>
+        <% } else if (dbReady) { %>
+            <div class="card-grid">
+                <% tournaments.forEach(tournament => { %>
+                    <a href="/tournament/<%= tournament._id %>" class="tile tournament-card">
+                        <h2 class="t-name"><%= tournament.name %></h2>
+                        <div class="t-meta">
+                            <span class="chip">👥 <%= tournament.players.length %> players</span>
+                            <span class="chip">🎲 <%= tournament.games.length %> games</span>
+                        </div>
+                        <div class="t-foot">
+                            <span class="t-open">Open →</span>
+                            <form action="/tournament/<%= tournament._id %>?_method=DELETE" method="POST"
+                                  onsubmit="return confirm('Delete this tournament and all its games?');"
+                                  onclick="event.stopPropagation();">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </a>
+                <% }) %>
+            </div>
+        <% } %>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <% if (isDeleted) { %>
+    <script>window.addEventListener('DOMContentLoaded', () => window.Arena.toast('Tournament deleted'));</script>
+    <% } %>
+    <script>
+        // Prevent the delete form's click from following the card link.
+        document.querySelectorAll('.tournament-card form').forEach(f => {
+            f.addEventListener('click', e => e.stopPropagation());
+        });
+    </script>
+</body>
+</html>

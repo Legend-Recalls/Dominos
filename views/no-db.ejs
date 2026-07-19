@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Offline — Dominoes Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="content">
+        <div class="empty-state tile" style="padding:2.5rem;">
+            <h3>📡 Database offline</h3>
+            <p>
+                Tournaments need MongoDB. Copy <code>.env.example</code> to <code>.env</code>,
+                set <code>MONGODB_URI</code>, and restart the server.
+            </p>
+            <p>Meanwhile, Quick Match works with zero setup:</p>
+            <a href="/quick" class="btn btn-lg">⚡ Play a Quick Match</a>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

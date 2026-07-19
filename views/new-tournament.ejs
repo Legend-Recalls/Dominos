@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Tournament — Dominoes Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="content">
+        <div class="panel tile">
+            <h1>Create Tournament</h1>
+            <form action="/tournament" method="POST" id="tournamentForm">
+                <div class="field">
+                    <label for="name">Tournament name</label>
+                    <input type="text" name="name" id="name" placeholder="Friday Night Bones" required>
+                </div>
+
+                <div class="field">
+                    <label>Players</label>
+                    <div class="player-pills" id="pills"></div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <input type="text" id="playerInput" placeholder="Add a player and press Enter">
+                        <button type="button" class="btn btn-sm" id="addPlayerBtn">Add</button>
+                    </div>
+                    <p class="hint">Add 2 or more players. Tip: press Enter to add quickly.</p>
+                    <input type="hidden" name="players" id="hiddenPlayers">
+                </div>
+
+                <button type="submit" class="btn btn-lg">🁫 Create Tournament</button>
+            </form>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        (function () {
+            const players = [];
+            const pills = document.getElementById('pills');
+            const input = document.getElementById('playerInput');
+            const addBtn = document.getElementById('addPlayerBtn');
+            const hidden = document.getElementById('hiddenPlayers');
+            const form = document.getElementById('tournamentForm');
+
+            function render() {
+                pills.innerHTML = '';
+                players.forEach((name, i) => {
+                    const pill = document.createElement('span');
+                    pill.className = 'player-pill';
+                    const label = document.createElement('span');
+                    label.textContent = name;
+                    const x = document.createElement('button');
+                    x.type = 'button';
+                    x.textContent = '×';
+                    x.addEventListener('click', () => { players.splice(i, 1); render(); });
+                    pill.appendChild(label);
+                    pill.appendChild(x);
+                    pills.appendChild(pill);
+                });
+                hidden.value = players.join(',');
+            }
+
+            function add() {
+                const name = input.value.trim();
+                if (!name) return;
+                if (players.includes(name)) { window.Arena.toast('Player already added', true); return; }
+                players.push(name);
+                input.value = '';
+                render();
+                input.focus();
+            }
+
+            addBtn.addEventListener('click', add);
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); add(); }
+            });
+
+            form.addEventListener('submit', e => {
+                if (players.length < 2) {
+                    e.preventDefault();
+                    window.Arena.toast('Add at least 2 players', true);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

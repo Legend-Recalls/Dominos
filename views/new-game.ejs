@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Game — Dominoes Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="content">
+        <div class="panel tile">
+            <h1>Add Game</h1>
+            <form action="/tournament/<%= tournamentId %>/game" method="POST">
+                <div class="field">
+                    <label for="date">Date</label>
+                    <input type="date" name="date" id="date" required>
+                </div>
+                <div class="field">
+                    <label for="time">Time</label>
+                    <input type="time" name="time" id="time" required>
+                </div>
+                <div class="field">
+                    <label for="maxpoints">Target points</label>
+                    <input type="number" name="maxpoints" id="maxpoints" value="100" min="1">
+                    <p class="hint">The score a game is usually played up to.</p>
+                </div>
+                <button type="submit" class="btn btn-lg">🎲 Start Game</button>
+            </form>
+        </div>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        // Prefill with the current local date & time.
+        (function () {
+            const d = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            document.getElementById('date').value =
+                `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            document.getElementById('time').value = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        })();
+    </script>
+</body>
+</html>
