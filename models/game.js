@@ -22,7 +22,7 @@ const gameSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    isNew: {
+    inProgress: {
         type: Boolean,
         default: true
     }

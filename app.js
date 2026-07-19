@@ -208,7 +208,7 @@ app.post('/game/:id/end', requireDb, async (req, res) => {
         }
 
         game.rounds = rounds;
-        game.isNew = false;
+        game.inProgress = false;
         await game.save();
 
         res.status(200).json({ success: true });

@@ -37,8 +37,8 @@
                                     <span class="g-date"><%= new Date(game.date).toDateString() %></span>
                                     <span class="hint"> · <%= game.time %> · to <%= game.maxpoints %></span>
                                 </a>
-                                <span class="g-status <%= game.isNew ? 'live' : 'done' %>">
-                                    <%= game.isNew ? 'In progress' : 'Played' %>
+                                <span class="g-status <%= game.inProgress ? 'live' : 'done' %>">
+                                    <%= game.inProgress ? 'In progress' : 'Played' %>
                                 </span>
                                 <form action="/game/<%= game._id %>?_method=DELETE" method="POST"
                                       onsubmit="return confirm('Delete this game?');">
