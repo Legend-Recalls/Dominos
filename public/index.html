@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dominoes Arena — Tournaments</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <main class="content">
+        <div class="page-head">
+            <h1>🁫 Dominoes Arena</h1>
+            <p>Track tournaments, score every round live, and crown the champion.</p>
+        </div>
+
+        <div class="actions-row">
+            <a href="/new-tournament.html" class="btn btn-lg">➕ New Tournament</a>
+            <a href="/quick.html" class="btn btn-lg btn-ghost">⚡ Quick Match</a>
+        </div>
+
+        <div id="listArea"><p class="hint" style="text-align:center;">Loading…</p></div>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script>
+        Arena.mount();
+
+        async function load() {
+            const area = document.getElementById('listArea');
+            let tournaments;
+            try {
+                tournaments = await Arena.api('/tournaments');
+            } catch (e) {
+                area.innerHTML = '';
+                const b = document.createElement('div');
+                b.className = 'banner';
+                b.textContent = 'Could not reach the API (' + e.message + '). Quick Match still works offline.';
+                area.appendChild(b);
+                return;
+            }
+
+            area.innerHTML = '';
+
+            if (tournaments.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state tile';
+                empty.style.padding = '2.5rem';
+                const fan = document.createElement('div');
+                fan.className = 'domino-fan';
+                fan.appendChild(Arena.domino(6, 3));
+                fan.appendChild(Arena.domino(5, 5));
+                fan.appendChild(Arena.domino(2, 4));
+                const h = document.createElement('h3');
+                h.textContent = 'No tournaments yet';
+                const p = document.createElement('p');
+                p.textContent = 'Set the table — create your first tournament to get started.';
+                const a = document.createElement('a');
+                a.href = '/new-tournament.html';
+                a.className = 'btn';
+                a.textContent = '➕ Create Tournament';
+                empty.append(fan, h, p, a);
+                area.appendChild(empty);
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'card-grid';
+            tournaments.forEach((t) => {
+                const card = document.createElement('a');
+                card.href = '/tournament.html?id=' + encodeURIComponent(t.id);
+                card.className = 'tile tournament-card';
+
+                const name = document.createElement('h2');
+                name.className = 't-name';
+                name.textContent = t.name;
+
+                const meta = document.createElement('div');
+                meta.className = 't-meta';
+                const c1 = document.createElement('span');
+                c1.className = 'chip';
+                c1.textContent = '👥 ' + t.players.length + ' players';
+                const c2 = document.createElement('span');
+                c2.className = 'chip';
+                c2.textContent = '🎲 ' + t.gameCount + ' games';
+                meta.append(c1, c2);
+
+                const foot = document.createElement('div');
+                foot.className = 't-foot';
+                const open = document.createElement('span');
+                open.className = 't-open';
+                open.textContent = 'Open →';
+                const del = document.createElement('button');
+                del.className = 'btn btn-sm btn-danger';
+                del.textContent = 'Delete';
+                del.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!confirm('Delete this tournament and all its games?')) return;
+                    try {
+                        await Arena.api('/tournaments/' + t.id, { method: 'DELETE' });
+                        Arena.toast('Tournament deleted');
+                        load();
+                    } catch (err) {
+                        Arena.toast(err.message, true);
+                    }
+                });
+                foot.append(open, del);
+
+                card.append(name, meta, foot);
+                grid.appendChild(card);
+            });
+            area.appendChild(grid);
+        }
+
+        load();
+    </script>
+</body>
+</html>

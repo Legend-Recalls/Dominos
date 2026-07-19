@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Match — Dominoes Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <main class="content">
+        <div class="page-head">
+            <h1>⚡ Quick Match</h1>
+            <p>A casual one-off game. Nothing is saved to any tournament — it lives in this browser only.</p>
+        </div>
+
+        <!-- Step 1: set up players -->
+        <div class="panel tile" id="setupPanel">
+            <h2>Who's playing?</h2>
+            <div class="player-pills" id="pills"></div>
+            <div style="display:flex; gap:0.5rem;">
+                <input type="text" id="playerInput" placeholder="Add a player and press Enter">
+                <button type="button" class="btn btn-sm" id="addPlayerBtn">Add</button>
+            </div>
+            <p class="hint">2–8 players. Scores are kept on this device until you finish or reset.</p>
+            <div class="actions-row" style="margin:1.2rem 0 0;">
+                <button class="btn btn-lg" id="startBtn">🁫 Start Match</button>
+            </div>
+        </div>
+
+        <!-- Step 2: scoreboard -->
+        <div class="tile scoreboard" id="boardPanel" hidden>
+            <table class="score-table" id="scoreTable">
+                <thead><tr id="headRow"><th style="width:48px;"></th></tr></thead>
+                <tbody id="roundsBody"></tbody>
+                <tfoot>
+                    <tr class="entry-row" id="entryRow"><td class="round-index">+</td></tr>
+                    <tr class="total-row" id="totalRow"><th class="round-index">Σ</th></tr>
+                </tfoot>
+            </table>
+
+            <div class="actions-row" style="margin-top:1.5rem; margin-bottom:0;">
+                <button class="btn" id="addRoundBtn">➕ Add Round</button>
+                <button class="btn btn-ghost" id="undoBtn">↩ Undo</button>
+                <button class="btn btn-danger" id="endBtn">🏁 Finish</button>
+                <button class="btn btn-ghost" id="resetBtn">🗑 Reset Match</button>
+            </div>
+        </div>
+
+        <!-- Step 3: results -->
+        <div class="picker-stage" id="resultsPanel" hidden style="margin-top:2rem;">
+            <h2 style="margin:0;">🏆 Final Standings</h2>
+            <ol class="order-list" id="resultsList"></ol>
+            <div class="actions-row">
+                <button class="btn" id="rematchBtn">🔁 Rematch (same players)</button>
+                <button class="btn btn-ghost" id="newMatchBtn">✨ New Match</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/scoreboard.js"></script>
+    <script>
+        Arena.mount();
+
+        const PLAYERS_KEY = 'arena-quick-players';
+        const ROUNDS_KEY = 'arena-quick-match';
+
+        const setupPanel = document.getElementById('setupPanel');
+        const boardPanel = document.getElementById('boardPanel');
+        const resultsPanel = document.getElementById('resultsPanel');
+        const pills = document.getElementById('pills');
+        const input = document.getElementById('playerInput');
+
+        let players = JSON.parse(localStorage.getItem(PLAYERS_KEY) || '[]');
+
+        function renderPills() {
+            pills.innerHTML = '';
+            players.forEach((name, i) => {
+                pills.appendChild(Arena.pill(name, () => {
+                    players.splice(i, 1); persistPlayers(); renderPills();
+                }));
+            });
+        }
+
+        function persistPlayers() {
+            localStorage.setItem(PLAYERS_KEY, JSON.stringify(players));
+        }
+
+        function addPlayer() {
+            const name = input.value.trim();
+            if (!name) return;
+            if (players.includes(name)) { Arena.toast('Player already added', true); return; }
+            if (players.length >= 8) { Arena.toast('Max 8 players', true); return; }
+            players.push(name);
+            persistPlayers();
+            input.value = '';
+            renderPills();
+            input.focus();
+        }
+
+        function buildBoard() {
+            const headRow = document.getElementById('headRow');
+            const entryRow = document.getElementById('entryRow');
+            const totalRow = document.getElementById('totalRow');
+            headRow.innerHTML = '<th style="width:48px;"></th>';
+            entryRow.innerHTML = '<td class="round-index">+</td>';
+            totalRow.innerHTML = '<th class="round-index">Σ</th>';
+
+            players.forEach((name) => {
+                const th = document.createElement('th');
+                th.className = 'player-head';
+                th.dataset.player = name;
+                const label = document.createElement('span');
+                label.textContent = name;
+                const dot = document.createElement('span');
+                dot.className = 'lead-dot';
+                th.append(label, dot);
+                headRow.appendChild(th);
+
+                const td = document.createElement('td');
+                const inp = document.createElement('input');
+                inp.type = 'number';
+                inp.className = 'score-input';
+                inp.inputMode = 'numeric';
+                inp.placeholder = '0';
+                td.appendChild(inp);
+                entryRow.appendChild(td);
+
+                const tth = document.createElement('th');
+                const tv = document.createElement('span');
+                tv.className = 'total-value';
+                tv.textContent = '0';
+                tth.appendChild(tv);
+                totalRow.appendChild(tth);
+            });
+
+            window.initScoreboard({ storageKey: ROUNDS_KEY, onEnd: showResults });
+        }
+
+        function showResults(rounds, totals, ranking) {
+            const list = document.getElementById('resultsList');
+            list.innerHTML = '';
+            ranking.forEach((r, i) => {
+                const li = document.createElement('li');
+                li.className = 'tile order-item';
+                li.style.animationDelay = (i * 0.09) + 's';
+                const seat = document.createElement('span');
+                seat.className = 'seat';
+                seat.textContent = i + 1;
+                const label = document.createElement('span');
+                label.textContent = r.name + ' — ' + r.total + ' pts';
+                li.append(seat, label);
+                list.appendChild(li);
+            });
+            boardPanel.hidden = true;
+            resultsPanel.hidden = false;
+        }
+
+        function startMatch() {
+            if (players.length < 2) { Arena.toast('Add at least 2 players', true); return; }
+            setupPanel.hidden = true;
+            resultsPanel.hidden = true;
+            boardPanel.hidden = false;
+            buildBoard();
+        }
+
+        function resetMatch(clearPlayers) {
+            localStorage.removeItem(ROUNDS_KEY);
+            if (clearPlayers) {
+                players = [];
+                persistPlayers();
+                renderPills();
+            }
+            resultsPanel.hidden = true;
+            boardPanel.hidden = true;
+            setupPanel.hidden = false;
+        }
+
+        document.getElementById('addPlayerBtn').addEventListener('click', addPlayer);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); addPlayer(); }
+        });
+        document.getElementById('startBtn').addEventListener('click', startMatch);
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (confirm('Clear all rounds for this match?')) {
+                localStorage.removeItem(ROUNDS_KEY);
+                buildBoard();
+            }
+        });
+        document.getElementById('rematchBtn').addEventListener('click', () => {
+            localStorage.removeItem(ROUNDS_KEY);
+            startMatch();
+        });
+        document.getElementById('newMatchBtn').addEventListener('click', () => resetMatch(true));
+
+        // Resume an in-progress match if one exists.
+        renderPills();
+        const savedRounds = localStorage.getItem(ROUNDS_KEY);
+        if (players.length >= 2 && savedRounds && JSON.parse(savedRounds).length > 0) {
+            startMatch();
+            Arena.toast('Resumed your match in progress');
+        }
+    </script>
+</body>
+</html>

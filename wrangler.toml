@@ -1,0 +1,10 @@
+name = "dominoes-arena"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "public"
+
+# Workers KV namespace used by functions/api/[[route]].js.
+# Create one with:  npx wrangler kv namespace create ARENA
+# then paste the returned id below (and a preview_id for local dev).
+[[kv_namespaces]]
+binding = "ARENA"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"

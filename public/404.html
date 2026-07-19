@@ -8,20 +8,21 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <%- include('partials/header') %>
-
     <main class="content">
         <div class="empty-state tile" style="padding:2.5rem;">
-            <div class="domino-fan">
-                <%- include('partials/domino', { top: 4, bottom: 0 }) %>
-                <%- include('partials/domino', { top: 0, bottom: 4 }) %>
-            </div>
+            <div class="domino-fan" id="fan"></div>
             <h3>404 — this tile isn't on the table</h3>
             <p>The page you're looking for doesn't exist.</p>
             <a href="/" class="btn">← Back to the Arena</a>
         </div>
     </main>
 
-    <%- include('partials/footer') %>
+    <script src="/js/app.js"></script>
+    <script>
+        Arena.mount();
+        const fan = document.getElementById('fan');
+        fan.appendChild(Arena.domino(4, 0));
+        fan.appendChild(Arena.domino(0, 4));
+    </script>
 </body>
 </html>

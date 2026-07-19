@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament — Dominoes Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <main class="content">
+        <div class="page-head">
+            <h1 id="tName">Loading…</h1>
+            <p id="tPlayers"></p>
+        </div>
+
+        <div class="actions-row">
+            <button class="btn" id="addGameBtn">🎲 Add Game</button>
+            <a class="btn btn-ghost" id="pickerLink" href="#">🔀 Player Order</a>
+        </div>
+
+        <!-- inline add-game form -->
+        <div class="panel tile" id="gameForm" hidden style="margin-bottom:1.4rem;">
+            <h2>New game</h2>
+            <div class="field"><label for="gDate">Date</label><input type="date" id="gDate"></div>
+            <div class="field"><label for="gTime">Time</label><input type="time" id="gTime"></div>
+            <div class="field">
+                <label for="gMax">Target points</label>
+                <input type="number" id="gMax" value="100" min="1">
+            </div>
+            <div class="actions-row" style="margin:0;">
+                <button class="btn" id="createGameBtn">Start Game</button>
+                <button class="btn btn-ghost" id="cancelGameBtn">Cancel</button>
+            </div>
+        </div>
+
+        <div class="split">
+            <section class="tile" style="padding:1.4rem;">
+                <div class="section-title"><h2 style="color:var(--ink)">Games</h2></div>
+                <div id="gamesArea"><p class="hint">Loading…</p></div>
+            </section>
+
+            <aside class="tile leaderboard">
+                <h2>🏆 Leaderboard</h2>
+                <div id="lbArea"></div>
+                <p class="hint" id="lbHint" style="margin-top:1rem; text-align:center;"></p>
+            </aside>
+        </div>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script>
+        Arena.mount();
+        const tid = Arena.qs('id');
+        let tournament = null;
+
+        document.getElementById('pickerLink').href = '/picker.html?id=' + encodeURIComponent(tid);
+
+        async function load() {
+            try {
+                tournament = await Arena.api('/tournaments/' + tid);
+            } catch (e) {
+                document.getElementById('tName').textContent = 'Tournament not found';
+                Arena.toast(e.message, true);
+                return;
+            }
+            document.getElementById('tName').textContent = tournament.name;
+            document.getElementById('tPlayers').textContent = tournament.players.join(' · ');
+            renderGames();
+            renderLeaderboard();
+        }
+
+        function renderGames() {
+            const area = document.getElementById('gamesArea');
+            area.innerHTML = '';
+            if (tournament.games.length === 0) {
+                const p = document.createElement('p');
+                p.className = 'hint';
+                p.textContent = 'No games yet. Add the first game to start scoring.';
+                area.appendChild(p);
+                return;
+            }
+            const ul = document.createElement('ul');
+            ul.className = 'game-list';
+            tournament.games.forEach((g) => {
+                const li = document.createElement('li');
+                li.className = 'tile game-row';
+                li.style.boxShadow = 'none';
+
+                const a = document.createElement('a');
+                a.href = '/game.html?tid=' + encodeURIComponent(tid) + '&gid=' + encodeURIComponent(g.id);
+                a.style.cssText = 'text-decoration:none; flex:1;';
+                const d = document.createElement('span');
+                d.className = 'g-date';
+                d.textContent = new Date(g.date).toDateString();
+                const meta = document.createElement('span');
+                meta.className = 'hint';
+                meta.textContent = ' · ' + g.time + ' · to ' + g.maxpoints;
+                a.append(d, meta);
+
+                const status = document.createElement('span');
+                status.className = 'g-status ' + (g.inProgress ? 'live' : 'done');
+                status.textContent = g.inProgress ? 'In progress' : 'Played';
+
+                const del = document.createElement('button');
+                del.className = 'btn btn-sm btn-danger';
+                del.textContent = '✕';
+                del.addEventListener('click', async () => {
+                    if (!confirm('Delete this game?')) return;
+                    try {
+                        await Arena.api('/tournaments/' + tid + '/games/' + g.id, { method: 'DELETE' });
+                        Arena.toast('Game deleted');
+                        load();
+                    } catch (e) { Arena.toast(e.message, true); }
+                });
+
+                li.append(a, status, del);
+                ul.appendChild(li);
+            });
+            area.appendChild(ul);
+        }
+
+        function renderLeaderboard() {
+            // Placement points: per game, rank players by total ascending
+            // (lowest is best); best gets the most points. Summed across games.
+            const scores = {};
+            tournament.players.forEach((p) => { scores[p] = 0; });
+
+            tournament.games.forEach((g) => {
+                const totals = new Array(tournament.players.length).fill(0);
+                g.rounds.forEach((round) => {
+                    round.forEach((s, i) => { totals[i] += s; });
+                });
+                const pairs = totals.map((score, index) => ({ score, index }));
+                pairs.sort((a, b) => b.score - a.score);
+                pairs.forEach((pair, rank) => {
+                    scores[tournament.players[pair.index]] += rank + 1;
+                });
+            });
+
+            const ranked = Object.entries(scores)
+                .map(([player, points]) => ({ player, points }))
+                .sort((a, b) => b.points - a.points);
+
+            const area = document.getElementById('lbArea');
+            area.innerHTML = '';
+            ranked.forEach((row, i) => {
+                const div = document.createElement('div');
+                div.className = 'rank-row pos-' + (i + 1);
+                const badge = document.createElement('span');
+                badge.className = 'rank-badge';
+                badge.textContent = i + 1;
+                const name = document.createElement('span');
+                name.className = 'rank-name';
+                name.textContent = row.player;
+                const pts = document.createElement('span');
+                pts.className = 'rank-points';
+                pts.textContent = row.points + ' pts';
+                div.append(badge, name, pts);
+                area.appendChild(div);
+            });
+            document.getElementById('lbHint').textContent =
+                'Placement points across ' + tournament.games.length + ' game(s).';
+        }
+
+        // --- add game form ---
+        const form = document.getElementById('gameForm');
+        document.getElementById('addGameBtn').addEventListener('click', () => {
+            const d = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            document.getElementById('gDate').value =
+                d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+            document.getElementById('gTime').value = pad(d.getHours()) + ':' + pad(d.getMinutes());
+            form.hidden = false;
+        });
+        document.getElementById('cancelGameBtn').addEventListener('click', () => { form.hidden = true; });
+        document.getElementById('createGameBtn').addEventListener('click', async () => {
+            try {
+                const game = await Arena.api('/tournaments/' + tid + '/games', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        date: document.getElementById('gDate').value,
+                        time: document.getElementById('gTime').value,
+                        maxpoints: document.getElementById('gMax').value
+                    })
+                });
+                location.href = '/game.html?tid=' + encodeURIComponent(tid) + '&gid=' + encodeURIComponent(game.id);
+            } catch (e) { Arena.toast(e.message, true); }
+        });
+
+        load();
+    </script>
+</body>
+</html>

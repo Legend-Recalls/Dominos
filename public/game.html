@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game — Dominoes Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <main class="content">
+        <div class="page-head">
+            <h1>🎲 Game Night</h1>
+            <p id="gameMeta">Loading…</p>
+        </div>
+
+        <div class="tile scoreboard" id="boardPanel" hidden>
+            <table class="score-table" id="scoreTable">
+                <thead><tr id="headRow"><th style="width:48px;"></th></tr></thead>
+                <tbody id="roundsBody"></tbody>
+                <tfoot>
+                    <tr class="entry-row" id="entryRow"><td class="round-index">+</td></tr>
+                    <tr class="total-row" id="totalRow"><th class="round-index">Σ</th></tr>
+                </tfoot>
+            </table>
+
+            <div class="actions-row" style="margin-top:1.5rem; margin-bottom:0;">
+                <button class="btn" id="addRoundBtn">➕ Add Round</button>
+                <button class="btn btn-ghost" id="undoBtn">↩ Undo</button>
+                <button class="btn btn-danger" id="endBtn">🏁 End Game</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/scoreboard.js"></script>
+    <script>
+        Arena.mount();
+        const tid = Arena.qs('tid');
+        const gid = Arena.qs('gid');
+
+        function buildBoard(players) {
+            const headRow = document.getElementById('headRow');
+            const entryRow = document.getElementById('entryRow');
+            const totalRow = document.getElementById('totalRow');
+            players.forEach((name) => {
+                const th = document.createElement('th');
+                th.className = 'player-head';
+                th.dataset.player = name;
+                const label = document.createElement('span');
+                label.textContent = name;
+                const dot = document.createElement('span');
+                dot.className = 'lead-dot';
+                th.append(label, dot);
+                headRow.appendChild(th);
+
+                const td = document.createElement('td');
+                const inp = document.createElement('input');
+                inp.type = 'number';
+                inp.className = 'score-input';
+                inp.inputMode = 'numeric';
+                inp.placeholder = '0';
+                td.appendChild(inp);
+                entryRow.appendChild(td);
+
+                const tth = document.createElement('th');
+                const tv = document.createElement('span');
+                tv.className = 'total-value';
+                tv.textContent = '0';
+                tth.appendChild(tv);
+                totalRow.appendChild(tth);
+            });
+        }
+
+        (async function () {
+            let data;
+            try {
+                data = await Arena.api('/tournaments/' + tid + '/games/' + gid);
+            } catch (e) {
+                document.getElementById('gameMeta').textContent = 'Game not found';
+                Arena.toast(e.message, true);
+                return;
+            }
+            const { tournament, game } = data;
+
+            const meta = document.getElementById('gameMeta');
+            meta.innerHTML = '';
+            const back = document.createElement('a');
+            back.href = '/tournament.html?id=' + encodeURIComponent(tournament.id);
+            back.style.color = 'var(--brass)';
+            back.textContent = tournament.name;
+            meta.appendChild(back);
+            meta.append(' · ' + new Date(game.date).toDateString() + ' @ ' + game.time + ' · to ' + game.maxpoints + ' pts');
+
+            buildBoard(tournament.players);
+            document.getElementById('boardPanel').hidden = false;
+
+            window.initScoreboard({
+                storageKey: 'arena-game-' + game.id,
+                initialRounds: game.rounds,
+                endpoint: '/api/tournaments/' + tid + '/games/' + gid + '/end',
+                onEnd: function (rounds, totals, ranking) {
+                    let msg = '🏁 Final ranking:\n\n';
+                    ranking.forEach((r, i) => { msg += (i + 1) + '. ' + r.name + ' — ' + r.total + '\n'; });
+                    setTimeout(() => alert(msg), 200);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
